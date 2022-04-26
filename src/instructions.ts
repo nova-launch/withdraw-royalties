@@ -1,5 +1,6 @@
 import { web3, Program } from '@project-serum/anchor';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+import type { MasterAccount } from './types';
 import type { NftSale } from './idl';
 
 export interface ShareObj {
@@ -15,7 +16,8 @@ export interface RemainingAccount {
 
 export interface WithdrawParams {
     payer: web3.PublicKey /** Solana address for the entity paying for the instruction */;
-    masterAccount: web3.PublicKey /** Solana address for the Nova master account */;
+    masterAccountKey: web3.PublicKey /** Solana address for the Nova master account */;
+    masterAccountObj: MasterAccount /** The MasterAccount object */;
     mint?: web3.PublicKey /** Solana address for the token being withdrawn (optional) */;
     program: Program<NftSale> /** the anchor Program */;
 }
@@ -42,9 +44,8 @@ export async function getAssociatedTokenAddress(owner: web3.PublicKey, mint: web
  * @returns array of TransactionInstruction[]
  */
 export const withdrawInstructions = async (params: WithdrawParams) => {
-    const { payer, masterAccount, mint, program } = params;
+    const { payer, masterAccountKey, masterAccountObj, mint, program } = params;
 
-    const masterAccountObj = await program.account.masterAccount.fetch(masterAccount);
     const royaltyShareObjects = masterAccountObj.royaltyShare as ShareObj[];
     const instructions = [];
     const remainingAccounts = [];
@@ -82,7 +83,7 @@ export const withdrawInstructions = async (params: WithdrawParams) => {
         program.instruction.withdraw({
             accounts: {
                 caller: payer,
-                masterAccount: masterAccount,
+                masterAccount: masterAccountKey,
                 programAuthority: masterAccountObj.programAuthority,
                 systemProgram: web3.SystemProgram.programId,
             },
