@@ -1,5 +1,5 @@
 import { WalletError } from '@solana/wallet-adapter-base';
-import { WalletDialogProvider, WalletMultiButton } from '@solana/wallet-adapter-material-ui';
+import { WalletDialogProvider } from '@solana/wallet-adapter-material-ui';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import {
     GlowWalletAdapter,
@@ -8,8 +8,9 @@ import {
     SolletWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { useSnackbar } from 'notistack';
-import { COMMITMENT, DEFAULT_RPC_URI, RPC_TIMEOUT } from './constants';
 import React, { FC, ReactNode, useCallback, useMemo } from 'react';
+import Body from './Body';
+import { COMMITMENT, DEFAULT_RPC_URI, RPC_TIMEOUT } from './constants';
 import { Theme } from './Theme';
 
 export const App: FC = () => {
@@ -17,7 +18,7 @@ export const App: FC = () => {
     return (
         <Theme>
             <Context rpcUri={rpcUri}>
-                <Content />
+                <Body />
             </Context>
         </Theme>
     );
@@ -65,8 +66,4 @@ const Context: FC<ContextProps> = ({ children, rpcUri }) => {
             </WalletProvider>
         </ConnectionProvider>
     );
-};
-
-const Content: FC = () => {
-    return <WalletMultiButton />;
 };
