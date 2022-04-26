@@ -5,7 +5,6 @@ import {
     AppBar,
     Box,
     Button,
-    Card,
     Container,
     Grid,
     Paper,
@@ -20,8 +19,8 @@ import {
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { Provider, Program } from '@project-serum/anchor';
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { BN, Provider, Program } from '@project-serum/anchor';
 import { COMMITMENT, DEFAULT_RPC_URI, LAUNCH_PROGRAM_ID_V1, RPC_TIMEOUT } from './constants';
 import { NftSale, IDL } from './idl';
 import type { MasterAccount } from './types';
@@ -31,6 +30,7 @@ const Body = () => {
     const [balance, setBalance] = useState<number | null>(null);
     const [anchorProgram, setAnchorProgram] = useState<Program<NftSale> | null>(null);
     const [masterAccountObj, setMasterAccountObj] = useState<MasterAccount | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
 
     // formik stuff
     const validatePubkey = (value: string | undefined) => {
@@ -58,6 +58,7 @@ const Body = () => {
         },
         validationSchema: validationSchema,
         onSubmit: (values) => {
+            setLoading(true);
             loadEverything();
             console.log(JSON.stringify(values, null, 2));
         },
@@ -81,9 +82,15 @@ const Body = () => {
             const masterAccount = await program.account.masterAccount.fetchNullable(formik.values.masterAccount);
             if (masterAccount) {
                 setMasterAccountObj(masterAccount as MasterAccount);
-                setBalance(await program.provider.connection.getBalance(masterAccount.programAuthority));
+                const solBalance = await program.provider.connection.getBalance(masterAccount.programAuthority);
+                if (solBalance > 0) {
+                    setBalance(solBalance / LAMPORTS_PER_SOL);
+                } else {
+                    setBalance(0);
+                }
             }
         }
+        setLoading(false);
     }, [wallet, formik.values]);
     // end load master account
 
@@ -105,7 +112,7 @@ const Body = () => {
                             p: 3,
                         }}
                     >
-                        <Typography component="p">Sex</Typography>
+                        <Typography component="p">Use this tool to withdraw your royalties.</Typography>
                         {masterAccountObj && (
                             <React.Fragment>
                                 <Box
@@ -132,22 +139,24 @@ const Body = () => {
                                                         <TableCell component="th" scope="row">
                                                             Royalty Balance
                                                         </TableCell>
-                                                        <TableCell align="right">{balance}</TableCell>
+                                                        <TableCell align="right">{balance} SOL</TableCell>
                                                     </TableRow>
                                                 )}
                                             </TableBody>
                                         </Table>
                                     </TableContainer>
                                 </Box>
-                                <Box
-                                    sx={{
-                                        mt: 1,
-                                    }}
-                                >
-                                    <Button color="success" variant="contained" fullWidth type="submit">
-                                        Withdraw
-                                    </Button>
-                                </Box>
+                                {balance != null && (
+                                    <Box
+                                        sx={{
+                                            mt: 1,
+                                        }}
+                                    >
+                                        <Button color="success" variant="contained" fullWidth type="submit">
+                                            Click To Withdraw {balance} SOL
+                                        </Button>
+                                    </Box>
+                                )}
                             </React.Fragment>
                         )}
                         <Box
@@ -176,9 +185,25 @@ const Body = () => {
                                     error={formik.touched.rpc && Boolean(formik.errors.rpc)}
                                     helperText={formik.touched.rpc && formik.errors.rpc}
                                 />
-                                <Button color="primary" variant="contained" fullWidth type="submit">
-                                    Load Master Account
-                                </Button>
+                                {wallet ? (
+                                    <Button
+                                        disabled={loading}
+                                        color="primary"
+                                        variant="contained"
+                                        fullWidth
+                                        type="submit"
+                                    >
+                                        {loading === true ? 'Loading' : 'Load'} Master Account
+                                    </Button>
+                                ) : (
+                                    <Box
+                                        sx={{
+                                            mt: 5,
+                                        }}
+                                    >
+                                        <WalletMultiButton />
+                                    </Box>
+                                )}
                             </form>
                         </Box>
                     </Box>
