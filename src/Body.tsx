@@ -17,6 +17,7 @@ import {
     Toolbar,
     Typography,
 } from '@mui/material';
+import queryString from 'query-string';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useSnackbar } from 'notistack';
@@ -39,9 +40,7 @@ const Body = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [withdrawing, setWithdrawing] = useState<boolean>(false);
     const [txId, setTxId] = useState<string | null>(null);
-
-    // const params = new URLSearchParams(window.location.search);
-    // console.log(params, '>>>>>>>>>>>>>>>>>');
+    const urlParams = queryString.parse(window.location.search);
 
     // formik stuff
     const validatePubkey = (value: string | undefined) => {
@@ -65,7 +64,7 @@ const Body = () => {
     const formik = useFormik({
         initialValues: {
             rpc: DEFAULT_RPC_URI,
-            masterAccount: '',
+            masterAccount: urlParams.account == null ? '' : urlParams.account.toString(),
         },
         validationSchema: validationSchema,
         onSubmit: (values) => {
