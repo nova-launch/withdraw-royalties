@@ -34,15 +34,18 @@
         "@mui/icons-material": "^5.5.0",
         "@mui/material": "^5.5.0",
         "@project-serum/anchor": "0.23.0",
+        "@saberhq/anchor-contrib": "^1.12.67",
         "@solana/spl-token": "0.1.8",
         "@solana/wallet-adapter-base": "^0.9.4",
         "@solana/wallet-adapter-material-ui": "^0.16.4",
         "@solana/wallet-adapter-react": "^0.15.3",
         "@solana/wallet-adapter-wallets": "^0.16.0",
         "@solana/web3.js": "^1.36.0",
+        "formik": "^2.2.9",
         "notistack": "^2.0.0",
         "react": "^17.0.0",
-        "react-dom": "^17.0.0"
+        "react-dom": "^17.0.0",
+        "yup": "^0.32.11"
     },
     "devDependencies": {
         "@types/eslint": "^8.2.2",
