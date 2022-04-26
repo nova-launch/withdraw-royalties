@@ -19,18 +19,29 @@ import {
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
+import { useSnackbar } from 'notistack';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import { BN, Provider, Program } from '@project-serum/anchor';
-import { COMMITMENT, DEFAULT_RPC_URI, LAUNCH_PROGRAM_ID_V1, RPC_TIMEOUT } from './constants';
+import { Provider, Program } from '@project-serum/anchor';
+import { SmartInstructionSender } from '@holaplex/solana-web3-tools';
+import { withdrawInstructions } from './instructions';
+import { COMMITMENT, DEFAULT_RPC_URI, LAUNCH_PROGRAM_ID_V1, LAUNCH_PROGRAM_ID_V2, RPC_TIMEOUT } from './constants';
+import { V1_ACCOUNTS } from './known-accounts';
 import { NftSale, IDL } from './idl';
 import type { MasterAccount } from './types';
 
 const Body = () => {
     const wallet = useAnchorWallet() as AnchorWallet;
+    const { enqueueSnackbar } = useSnackbar();
     const [balance, setBalance] = useState<number | null>(null);
     const [anchorProgram, setAnchorProgram] = useState<Program<NftSale> | null>(null);
+    const [masterAccountKey, setMasterAccountKey] = useState<PublicKey | null>(null);
     const [masterAccountObj, setMasterAccountObj] = useState<MasterAccount | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
+    const [withdrawing, setWithdrawing] = useState<boolean>(false);
+    const [txId, setTxId] = useState<string | null>(null);
+
+    // const params = new URLSearchParams(window.location.search);
+    // console.log(params, '>>>>>>>>>>>>>>>>>');
 
     // formik stuff
     const validatePubkey = (value: string | undefined) => {
@@ -59,6 +70,7 @@ const Body = () => {
         validationSchema: validationSchema,
         onSubmit: (values) => {
             setLoading(true);
+            setTxId(null);
             loadEverything();
             console.log(JSON.stringify(values, null, 2));
         },
@@ -71,16 +83,19 @@ const Body = () => {
             commitment: COMMITMENT,
             confirmTransactionInitialTimeout: RPC_TIMEOUT,
         });
-        const program = new Program(
-            IDL,
-            LAUNCH_PROGRAM_ID_V1,
-            new Provider(connection, wallet, Provider.defaultOptions())
-        );
+
+        let programId = LAUNCH_PROGRAM_ID_V2;
+        if (V1_ACCOUNTS.includes(formik.values.masterAccount)) {
+            programId = LAUNCH_PROGRAM_ID_V1;
+        }
+        const program = new Program(IDL, programId, new Provider(connection, wallet, Provider.defaultOptions()));
 
         if (wallet && program) {
             setAnchorProgram(program);
-            const masterAccount = await program.account.masterAccount.fetchNullable(formik.values.masterAccount);
+            const thisMasterAccountKey = new PublicKey(formik.values.masterAccount);
+            const masterAccount = await program.account.masterAccount.fetchNullable(thisMasterAccountKey);
             if (masterAccount) {
+                setMasterAccountKey(thisMasterAccountKey);
                 setMasterAccountObj(masterAccount as MasterAccount);
                 const solBalance = await program.provider.connection.getBalance(masterAccount.programAuthority);
                 if (solBalance > 0) {
@@ -93,6 +108,62 @@ const Body = () => {
         setLoading(false);
     }, [wallet, formik.values]);
     // end load master account
+
+    // run withdrawal
+    const withdraw = useCallback(async () => {
+        setTxId(null);
+        setWithdrawing(true);
+        try {
+            if (wallet && masterAccountKey && masterAccountObj && anchorProgram) {
+                const { instructions } = await withdrawInstructions({
+                    payer: wallet.publicKey,
+                    masterAccountKey,
+                    masterAccountObj,
+                    program: anchorProgram,
+                });
+                const sender = SmartInstructionSender.build(wallet, anchorProgram.provider.connection)
+                    .config({
+                        maxSigningAttempts: 3,
+                        abortOnFailure: true,
+                        commitment: COMMITMENT,
+                    })
+                    .withInstructionSets([
+                        {
+                            instructions,
+                            signers: [],
+                        },
+                    ])
+                    .onProgress((_currentIndex, txId) => {
+                        setTxId(txId);
+                        const balMsg = balance == null ? '' : `${balance} SOL`;
+                        const msg = `Successfully withdrew ${balMsg}`;
+                        enqueueSnackbar(msg, { variant: 'success' });
+                        console.log(`Just sent: ${txId}`);
+                    })
+                    .onFailure((err: Error) => {
+                        enqueueSnackbar(err.toString(), { variant: 'error' });
+                        console.log(`Error: ${err}`);
+                    })
+                    .onReSign((attempt, i) => {
+                        const msg = `ReSigning: ${i} attempt: ${attempt}`;
+                        enqueueSnackbar(msg, { variant: 'warning' });
+                        console.warn(msg);
+                    });
+                enqueueSnackbar('Sending withdrawal request', { variant: 'info' });
+                sender
+                    .send()
+                    .then(() => loadEverything())
+                    .finally(() => setWithdrawing(false));
+            } else {
+                console.log('Master Account not loaded properly!');
+                setWithdrawing(false);
+            }
+        } catch (err: any) {
+            enqueueSnackbar(err.toString(), { variant: 'error' });
+            console.log(`Error: ${err}`);
+        }
+    }, [wallet, balance, enqueueSnackbar, masterAccountKey, masterAccountObj, anchorProgram, loadEverything]);
+    // end run withdrawal
 
     return (
         <Container fixed>
@@ -152,12 +223,37 @@ const Body = () => {
                                             mt: 1,
                                         }}
                                     >
-                                        <Button color="success" variant="contained" fullWidth type="submit">
-                                            Click To Withdraw {balance} SOL
+                                        <Button
+                                            disabled={withdrawing}
+                                            onClick={withdraw}
+                                            color="success"
+                                            variant="contained"
+                                            fullWidth
+                                            type="submit"
+                                        >
+                                            {withdrawing === true ? 'Withdrawing' : 'Click To Withdraw'} {balance} SOL
                                         </Button>
                                     </Box>
                                 )}
                             </React.Fragment>
+                        )}
+                        {txId && (
+                            <Box
+                                sx={{
+                                    mt: 1,
+                                }}
+                            >
+                                <Typography component="p">
+                                    <a
+                                        id="nova-mint-transaction-link"
+                                        href={`https://explorer.solana.com/tx/${txId}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        View transaction on Solana Explorer
+                                    </a>
+                                </Typography>
+                            </Box>
                         )}
                         <Box
                             sx={{
@@ -170,6 +266,7 @@ const Body = () => {
                                     id="masterAccount"
                                     name="masterAccount"
                                     label="Master Account"
+                                    disabled={loading || withdrawing}
                                     value={formik.values.masterAccount}
                                     onChange={formik.handleChange}
                                     error={formik.touched.masterAccount && Boolean(formik.errors.masterAccount)}
@@ -180,6 +277,7 @@ const Body = () => {
                                     id="rpc"
                                     name="rpc"
                                     label="RPC"
+                                    disabled={loading || withdrawing}
                                     value={formik.values.rpc}
                                     onChange={formik.handleChange}
                                     error={formik.touched.rpc && Boolean(formik.errors.rpc)}
@@ -187,7 +285,7 @@ const Body = () => {
                                 />
                                 {wallet ? (
                                     <Button
-                                        disabled={loading}
+                                        disabled={loading || withdrawing}
                                         color="primary"
                                         variant="contained"
                                         fullWidth
