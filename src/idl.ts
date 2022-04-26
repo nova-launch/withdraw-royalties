@@ -92,7 +92,24 @@ export type NftSale = {
             };
         }
     ];
-    types: [];
+    types: [
+        {
+            name: 'Share';
+            type: {
+                kind: 'struct';
+                fields: [
+                    {
+                        name: 'address';
+                        type: 'publicKey';
+                    },
+                    {
+                        name: 'share';
+                        type: 'u16';
+                    }
+                ];
+            };
+        }
+    ];
     errors: [
         {
             code: 6007;
@@ -196,7 +213,24 @@ export const IDL: NftSale = {
             },
         },
     ],
-    types: [],
+    types: [
+        {
+            name: 'Share',
+            type: {
+                kind: 'struct',
+                fields: [
+                    {
+                        name: 'address',
+                        type: 'publicKey',
+                    },
+                    {
+                        name: 'share',
+                        type: 'u16',
+                    },
+                ],
+            },
+        },
+    ],
     errors: [
         {
             code: 6007,
