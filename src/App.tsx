@@ -8,7 +8,7 @@ import {
     SolletWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { useSnackbar } from 'notistack';
-import { DEFAULT_RPC_URI } from './constants';
+import { COMMITMENT, DEFAULT_RPC_URI, RPC_TIMEOUT } from './constants';
 import React, { FC, ReactNode, useCallback, useMemo } from 'react';
 import { Theme } from './Theme';
 
@@ -53,8 +53,13 @@ const Context: FC<ContextProps> = ({ children, rpcUri }) => {
         [enqueueSnackbar]
     );
 
+    const connectionConfig = {
+        commitment: COMMITMENT,
+        confirmTransactionInitialTimeout: RPC_TIMEOUT,
+    };
+
     return (
-        <ConnectionProvider endpoint={endpoint}>
+        <ConnectionProvider endpoint={endpoint} config={connectionConfig}>
             <WalletProvider wallets={wallets} onError={onError} autoConnect>
                 <WalletDialogProvider>{children}</WalletDialogProvider>
             </WalletProvider>
