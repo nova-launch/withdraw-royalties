@@ -3,21 +3,21 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token } from '@solana/sp
 import type { NftSale } from './idl';
 
 export interface ShareObj {
-    address: web3.PublicKey;
-    share: number;
+    address: web3.PublicKey /** Solana address */;
+    share: number /** The share (as basis points) */;
 }
 
 export interface RemainingAccount {
-    pubkey: web3.PublicKey;
-    isWritable: boolean;
-    isSigner: boolean;
+    pubkey: web3.PublicKey /** Solana address */;
+    isWritable: boolean /** is the account represented by 'pubkey' writeable? */;
+    isSigner: boolean /** is the account represented by 'pubkey' a signer? */;
 }
 
 export interface WithdrawParams {
-    payer: web3.PublicKey;
-    masterAccount: web3.PublicKey;
-    mint?: web3.PublicKey;
-    program: Program<NftSale>;
+    payer: web3.PublicKey /** Solana address for the entity paying for the instruction */;
+    masterAccount: web3.PublicKey /** Solana address for the Nova master account */;
+    mint?: web3.PublicKey /** Solana address for the token being withdrawn (optional) */;
+    program: Program<NftSale> /** the anchor Program */;
 }
 
 /**
@@ -35,6 +35,12 @@ export async function getAssociatedTokenAddress(owner: web3.PublicKey, mint: web
     return address;
 }
 
+/**
+ * Get withdrawal instructions
+ *
+ * @param params - Withdraw Params
+ * @returns array of TransactionInstruction[]
+ */
 export const withdrawInstructions = async (params: WithdrawParams) => {
     const { payer, masterAccount, mint, program } = params;
 
