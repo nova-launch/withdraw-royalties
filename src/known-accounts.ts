@@ -1,3 +1,5 @@
+import type { V0Details } from './types';
+
 export const V1_ACCOUNTS = [
     'FjaN1yhAQJ5Mi149DZXrgtDsATYrYDU6giSC6DccddhJ',
     'CR4Q98ko4oAA1weRz9TbePm3E6kupFUP2dDQjYjjHJbK',
@@ -138,3 +140,38 @@ export const V1_ACCOUNTS = [
     'ALxH6C4yAnw2nF238FNWgmnyNrmxHsVMG8HJK9PRjZwD',
     '2JubCQM7xPypNNC3BXW9zUC25nZx8WCP1zMZtLicUU7t',
 ];
+
+export const V0_SEED = Buffer.from('NFTSale');
+
+export const V0_DATA_PREFIX = [183, 18, 70, 156, 148, 109, 161, 34];
+
+export const V0_DETAILS: V0Details = {
+    // lotus gang
+    JU29Tow84jUUU714QwDhW18nkw5EapvcVeTvFF9PE8g: {
+        programAddress: 'CcpYHYAMWz4rXttnnFm7yjnBJnNzCh5KzJUsoWx1MAHr',
+        recipients: ['2FsKxowquLKtzdQiinkW1e1eZe4FFpJvdLxsAT2LFMoA'],
+        data: V0_DATA_PREFIX,
+        seed: V0_SEED,
+    },
+    // monkey kingdom
+    Z9Gix88ad9dXX3NhHM3BW4QQfPswnMBtcDFuyMvGp4L: {
+        programAddress: 'A84VLiYJnWWiZJpGXH1jqU4ES2tpw7eLJykDHLsvkEm6',
+        recipients: ['n89DmPhRAUdvnS6rSSoxtqs7DKTZd4JpKRBLQvz8jeF'],
+        data: V0_DATA_PREFIX,
+        seed: V0_SEED,
+    },
+    // Solsister
+    '74gDQgTZk9y5DTwtfjCki4jMoQwYs5FAY2QNh9dcLSRR': {
+        programAddress: 'DJmtpC1jKsfnuS1BEsDnuQPLXRzydztai5UnQ5WpcuF5',
+        recipients: ['AhQszsH9VfzHMeW4ByN39SYnuVMKtF13m2fxo78SWKXB'],
+        data: V0_DATA_PREFIX,
+        seed: V0_SEED,
+    },
+    // Cool beans
+    '7WQdYggVXLgLRUEXc6zgQ1Tpkm8Qw5utpt3DzjCj9ZB9': {
+        programAddress: 'bnz4yNPsBA2YiTrtr5eoQgTsTRHRZtcP3Tvp5JdK7XA',
+        recipients: ['t9qgPYSwhhRjYUmoWJ2XPrDau5HEUx5aWeomrXutLk1'],
+        data: V0_DATA_PREFIX,
+        seed: V0_SEED,
+    },
+};
