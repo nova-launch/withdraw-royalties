@@ -174,4 +174,11 @@ export const V0_DETAILS: V0Details = {
         data: V0_DATA_PREFIX,
         seed: V0_SEED,
     },
+    // Plush Fight League
+    AVinAJRUV86SZYypHi4AJifLdR9AVhZSMjX3CzqvLVKV: {
+        programAddress: 'CHJd2VfxGJGbJNY6rqoFZGtdStRxdpYnzkDvBtGeVKzT',
+        recipients: ['ESXMFQbFSaVvzTPUabveNKgteubhjf9vN3vZmMAa8xv7'],
+        data: V0_DATA_PREFIX,
+        seed: V0_SEED,
+    },
 };
