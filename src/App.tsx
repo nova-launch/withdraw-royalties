@@ -2,9 +2,9 @@ import { WalletError } from '@solana/wallet-adapter-base';
 import { WalletDialogProvider } from '@solana/wallet-adapter-material-ui';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import {
-    GlowWalletAdapter,
     PhantomWalletAdapter,
-    SlopeWalletAdapter,
+    GlowWalletAdapter,
+    SolflareWalletAdapter,
     SolletWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { useSnackbar } from 'notistack';
@@ -39,7 +39,7 @@ const Context: FC<ContextProps> = ({ children, rpcUri }) => {
         () => [
             new PhantomWalletAdapter(),
             new GlowWalletAdapter(),
-            new SlopeWalletAdapter(),
+            new SolflareWalletAdapter(),
             new SolletWalletAdapter(),
         ],
         []
