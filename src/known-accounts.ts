@@ -181,4 +181,11 @@ export const V0_DETAILS: V0Details = {
         data: V0_DATA_PREFIX,
         seed: V0_SEED,
     },
+    // Rare Robots
+    Fc3fS5VisBRQiLT1RsmJBUQjNZEQn4SXni9GHq5jywZ2: {
+        programAddress: 'C9EcYvx6gurw1nadMUWqL7VVV4PFLMtbfPm9bUESfgXm',
+        recipients: ['GSehRUmRPpxnWjMWh5hmEXhnEEG5b4a89hh7wgScyLhA'],
+        data: V0_DATA_PREFIX,
+        seed: V0_SEED,
+    },
 };
