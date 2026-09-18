@@ -1,0 +1,40 @@
+:root { color-scheme: light dark; font: 16px/1.45 system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+header { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; padding: .75rem 1rem; border-bottom: 1px solid #8886; }
+h1 { font-size: 1.15rem; margin: 0 auto 0 0; }
+h1 small { font-size: .7rem; font-weight: normal; margin-left: .5rem; }
+main { padding: .5rem 1rem; }
+button, input, summary { font: inherit; padding: .4rem .65rem; }
+button, summary { cursor: pointer; }
+button:disabled { cursor: default; opacity: .55; }
+input { max-width: 100%; }
+#rpc-settings { position: relative; }
+#rpc-form { position: absolute; right: 0; z-index: 1; width: min(32rem, 90vw); padding: .75rem; background: Canvas; border: 1px solid #888; }
+#rpc-form label, #rpc-url { display: block; width: 100%; margin-bottom: .5rem; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .5rem 0; }
+#search { flex: 1; min-width: 12rem; }
+#notice, #rpc-status { margin: .4rem 0; font-size: .9rem; }
+#rpc-status, .footnote { color: GrayText; font-size: .85rem; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; }
+td, th { padding: .65rem .5rem; border-bottom: 1px solid #8885; vertical-align: top; }
+td:nth-child(2), th:nth-child(2) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td:last-child { width: 13rem; }
+.address { display: block; font-size: .8rem; color: GrayText; overflow-wrap: anywhere; }
+.row-status { font-size: .85rem; margin: .4rem 0 0; overflow-wrap: anywhere; }
+.error { color: light-dark(#a22013, #ff9c90); }
+.row-status a { margin-left: .4rem; }
+button + button { margin-left: .3rem; }
+button[aria-busy="true"]::before { content: ""; display: inline-block; width: .65rem; height: .65rem; margin-right: .45rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { button[aria-busy="true"]::before { animation: none; } }
+@media (max-width: 600px) {
+  main { padding: .5rem; }
+  header { padding: .5rem; }
+  h1 { width: 100%; }
+  td, th { padding: .5rem .25rem; font-size: .85rem; }
+  td:last-child { width: auto; }
+  td button { font-size: .85rem; padding: .4rem; }
+  .toolbar label { width: 100%; }
+}

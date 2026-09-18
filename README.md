@@ -1,5 +1,7 @@
 # Royalty Withdraw Tool
 
+The static Nova v2 replacement is in [`docs/`](docs/README.md). It can be served directly or hosted on GitHub Pages without a build. The original React application below remains for its older program paths.
+
 This is a simple tool that allows anyone to run instructions to withdraw royalties from any NFT project launched by Nova Launch.
 
 To use this tool, you need to input the project's master account and press the button to withdraw royalties.

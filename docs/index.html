@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>NFT royalty withdrawals</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="vendor/solana-web3-1.98.4.min.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header>
+    <h1>NFT royalties <small>Mainnet</small></h1>
+    <span id="wallet-status">Wallet disconnected</span>
+    <button id="phantom" type="button">Phantom</button>
+    <button id="backpack" type="button">Backpack</button>
+    <button id="disconnect" type="button" hidden>Disconnect</button>
+    <details id="rpc-settings">
+      <summary>RPC settings</summary>
+      <form id="rpc-form">
+        <label for="rpc-url">RPC URL (kept in this tab only)</label>
+        <input id="rpc-url" type="url" spellcheck="false" required>
+        <button type="submit">Use RPC</button>
+        <button id="rpc-reset" type="button">Use default</button>
+      </form>
+    </details>
+  </header>
+  <main>
+    <div class="toolbar">
+      <label for="search">Collection or master address</label>
+      <input id="search" type="search" placeholder="Search" spellcheck="false">
+      <button id="refresh" type="button">Load balances</button>
+    </div>
+    <p id="notice" role="status">Loading collections…</p>
+    <p id="rpc-status"></p>
+    <noscript>This page needs JavaScript to connect to a wallet and Solana RPC.</noscript>
+    <table>
+      <thead><tr><th scope="col">Collection</th><th scope="col">Royalty balance</th><th scope="col">Action</th></tr></thead>
+      <tbody id="collections"></tbody>
+    </table>
+    <p id="empty" hidden>No match. Paste a master address to look up an unlisted collection.</p>
+    <p class="footnote">Your wallet pays the transaction fee.</p>
+  </main>
+</body>
+</html>
