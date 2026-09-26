@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Withdraw SOL royalties for Nova NFT collections.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>NFT royalties · Nova</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='%2382e5b5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="vendor/solana-web3-1.98.4.min.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header>
+    <h1><span aria-hidden="true" class="dot"></span>NFT royalties <small>Nova · Mainnet</small></h1>
+    <div class="wallet-controls">
+      <span id="wallet-status" role="status">Wallet disconnected</span>
+      <button id="phantom" type="button">Phantom</button>
+      <button id="backpack" type="button">Backpack</button>
+      <button id="disconnect" class="quiet" type="button" hidden>Disconnect</button>
+      <details id="rpc-settings">
+        <summary>RPC<span id="rpc-fallback" hidden> · fallback</span></summary>
+        <form id="rpc-form">
+          <label for="rpc-url">Mainnet RPC URL</label>
+          <input id="rpc-url" type="password" inputmode="url" autocomplete="off" spellcheck="false" required>
+          <button type="submit">Use RPC</button>
+          <button id="rpc-reset" class="quiet" type="button">Use default</button>
+          <p id="rpc-status"></p>
+          <p>Custom URLs stay in this tab.</p>
+        </form>
+      </details>
+    </div>
+  </header>
+  <main>
+    <div class="toolbar">
+      <label class="sr-only" for="search">Search collection or master address</label>
+      <input id="search" type="search" placeholder="Search collection or master address…" spellcheck="false" autocomplete="off">
+      <button id="refresh" class="quiet" type="button">Load balances</button>
+    </div>
+    <p id="notice" role="status">Loading collections…</p>
+    <noscript>Enable JavaScript to use this page.</noscript>
+    <table>
+      <caption class="sr-only">NFT royalty withdrawals</caption>
+      <thead><tr><th scope="col">Collection</th><th scope="col">Balance (SOL)</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead>
+      <tbody id="collections"></tbody>
+    </table>
+    <p id="empty" hidden>No match. Try a collection name or its master address.</p>
+    <p class="footnote">Your wallet pays the transaction fee.</p>
+  </main>
+</body>
+</html>

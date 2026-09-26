@@ -3,36 +3,33 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import vm from "node:vm";
-import { decodeMaster, resolvePolicy, validatePolicy, withdrawalInstruction, withdrawable, lamports, formatSol, validateRpcUrl, watchSignature } from "../../docs/core.js";
-import { PROGRAM } from "../../docs/config.js";
-import { RpcClient } from "../../docs/rpc.js";
+import { validatePolicy, withdrawalInstruction, withdrawable, lamports, formatSol, validateRpcUrl, watchSignature } from "../../app.js";
+import { PROGRAM, MAINNET_GENESIS, collectionLabel } from "../../app.js";
+import { RpcClient } from "../../app.js";
 
-const vendor = readFileSync(new URL("../../docs/vendor/solana-web3-1.98.4.min.js", import.meta.url), "utf8");
+const vendor = readFileSync(new URL("../../vendor/solana-web3-1.98.4.min.js", import.meta.url), "utf8");
 const web3 = vm.runInThisContext(vendor + ";solanaWeb3;");
-const data = JSON.parse(readFileSync(new URL("../../docs/policies.json", import.meta.url)));
+const data = JSON.parse(readFileSync(new URL("../../catalog.json", import.meta.url)));
 const { policies } = data;
 const [master, policy] = Object.entries(policies)[0];
 const payer = web3.Keypair.fromSeed(Uint8Array.from({ length: 32 }, (_, i) => i + 1));
 
-function masterBytes(p) {
-  const bytes = new Uint8Array(533);
-  bytes.set(createHash("sha256").update("account:MasterAccount").digest().subarray(0, 8));
-  bytes.set(new web3.PublicKey(p.programAuthority).toBytes(), 72);
-  const view = new DataView(bytes.buffer);
-  view.setUint32(105, 0, true); // No sale-revenue shares in this fixture.
-  view.setUint32(109, p.royaltyShare.length, true);
-  p.royaltyShare.forEach((s, i) => {
-    bytes.set(new web3.PublicKey(s.address).toBytes(), 113 + i * 34);
-    view.setUint16(145 + i * 34, s.share, true);
-  });
-  return bytes;
-}
+test("sample labels omit serials without stripping collection numbers", () => {
+  assert.equal(collectionLabel("#103 Auk Solciety"), "Auk Solciety");
+  assert.equal(collectionLabel("#408Space Thug"), "Space Thug");
+  assert.equal(collectionLabel("4X4#918"), "4X4");
+  assert.equal(collectionLabel("Kaotic Kronic | Gen 1.5 #530"), "Kaotic Kronic | Gen 1.5");
+  assert.equal(collectionLabel("#1496"), "Unnamed collection");
+});
 
 test("vendored asset and data coverage", () => {
+  assert.equal(MAINNET_GENESIS, "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d");
+  assert.equal(new web3.PublicKey(MAINNET_GENESIS).toBytes().length, 32);
+  assert.equal(createHash("sha256").update(JSON.stringify(policies)).digest("hex"), "f0d7e39b8fa788f7a39bc4b9b90c5486bd4bf2fac550a975427471ce7d7c4f44");
   assert.equal(createHash("sha256").update(vendor).digest("hex"), "09cdbea951b2ed0e11bcbe3aeb1ee9f035f9fb51ed212aca645475ae82688cc3");
   assert.equal(data.program, PROGRAM);
   assert.equal(Object.keys(policies).length, 3209);
-  const collections = JSON.parse(readFileSync(new URL("../../docs/collections.json", import.meta.url)));
+  const collections = data.collections;
   assert.equal(collections.length, 136);
   for (const row of collections) assert.ok(policies[row.master]);
 });
@@ -42,7 +39,6 @@ test("all 3209 routes derive correctly and retain exact ABI, ordering and shares
     validatePolicy(p, web3);
     const [pda] = web3.PublicKey.findProgramAddressSync([new TextEncoder().encode("Nova"), new web3.PublicKey(address).toBytes()], new web3.PublicKey(PROGRAM));
     assert.equal(pda.toBase58(), p.programAuthority);
-    assert.deepEqual(decodeMaster(masterBytes(p), web3), p);
     const instruction = withdrawalInstruction(address, p, payer.publicKey, web3);
     assert.deepEqual([...instruction.data], [...createHash("sha256").update("global:withdraw").digest().subarray(0, 8)]);
     assert.deepEqual(instruction.keys.map(k => k.pubkey.toBase58()), [payer.publicKey.toBase58(), address, p.programAuthority, web3.SystemProgram.programId.toBase58(), ...p.royaltyShare.map(s => s.address)]);
@@ -51,24 +47,7 @@ test("all 3209 routes derive correctly and retain exact ABI, ordering and shares
   }
 });
 
-test("live policy wins; explicit absence alone permits snapshot fallback", async () => {
-  const live = { ...policy, royaltyShare: [{ address: payer.publicKey.toBase58(), share: 10_000 }] };
-  const rpc = { request: async () => ({ value: { owner: PROGRAM, data: [Buffer.from(masterBytes(live)).toString("base64"), "base64"] } }) };
-  assert.deepEqual(await resolvePolicy(master, policies, rpc, web3), live);
-  rpc.request = async () => ({ value: null });
-  assert.deepEqual(await resolvePolicy(master, policies, rpc, web3), policy);
-  await assert.rejects(resolvePolicy(payer.publicKey.toBase58(), policies, rpc, web3), /No saved/);
-  rpc.request = async () => { throw new Error("429"); };
-  await assert.rejects(resolvePolicy(master, policies, rpc, web3), /429/);
-  rpc.request = async () => ({});
-  await assert.rejects(resolvePolicy(master, policies, rpc, web3), /no account result/);
-  rpc.request = async () => ({ value: { owner: "wrong", data: ["", "base64"] } });
-  await assert.rejects(resolvePolicy(master, policies, rpc, web3), /Unexpected/);
-});
-
-test("malformed master and shares fail closed", () => {
-  assert.throws(() => decodeMaster(new Uint8Array(533), web3), /Not a Nova/);
-  assert.throws(() => decodeMaster(masterBytes(policy).subarray(0, 115), web3), /Invalid master/);
+test("malformed shares fail closed", () => {
   assert.throws(() => validatePolicy({ ...policy, royaltyShare: [{ address: master, share: 0 }] }, web3), /Invalid/);
 });
 
@@ -114,9 +93,19 @@ test("expiry reconciliation finds a late landed transaction", async () => {
 test("missing status and RPC failure stay uncertain, not falsely successful", async () => {
   assert.equal((await watch([null])).result.state, "unknown");
   assert.equal((await watch([new Error("offline")])).result.state, "unknown");
-  assert.equal((await watch([{ err: { InstructionError: [0, "Custom"] } }])).result.state, "failed");
+  assert.equal((await watch([{ confirmationStatus: "finalized", err: { InstructionError: [0, "Custom"] } }])).result.state, "failed");
   const { calls } = await watch([null], { signature: "test" });
   assert.ok(!calls.includes("getBlockHeight"), "wallet-replaced blockhash has no trusted expiry height");
+});
+test("unfinalized errors cannot terminate tracking on a fork", async () => {
+  assert.equal((await watch([{confirmationStatus:"processed",err:{InstructionError:[0,"Custom"]}}, {confirmationStatus:"finalized",err:null}])).result.state, "finalized");
+  assert.equal((await watch([null, {confirmationStatus:"processed",err:{InstructionError:[0,"Custom"]}}, {confirmationStatus:"finalized",err:null}])).result.state, "finalized");
+});
+test("a send makes only one attempt; recovery owns any resend", async () => {
+  let count=0;
+  const rpc=new RpcClient("https://rpc.test", async()=> {count++; throw new TypeError("Lost reply");});
+  await assert.rejects(rpc.sendTransaction(new Uint8Array(1)), /unreachable/);
+  assert.equal(count,1);
 });
 test("RPC never interprets missing data as account absence or retries simulation failures", async () => {
   const rpc = new RpcClient("https://rpc.test", async () => ({ ok: true, json: async () => ({}) }));
